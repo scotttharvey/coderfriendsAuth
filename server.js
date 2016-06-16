@@ -2,26 +2,26 @@ const
     express = require('express')
   , session = require('express-session')
   , passport = require('passport')
-  , GithubStrategy = require('passport-github').Strategy
+  , GithubStrategy = require('passport-github2').Strategy
   , config = require('./config')
 
 const app = express();
-
-app.use(passport.initialize())
-app.use(passport.session());
 app.use(session({
   resave: false,
-  saveUninitialized: false,
+  saveUninitialized: true,
   secret: config.secret
 }))
+app.use(express.static(__dirname + "/public"))
+app.use(passport.initialize())
+app.use(passport.session());
 
 
 passport.use(new GithubStrategy({
   clientID: config.clientID,
   clientSecret: config.clientSecret,
-  callbackURL: 'http://localhost:9000/auth/github/callback'
+  callbackURL: 'http://localhost:3000/auth/github/callback'
 }, (token, tokenSecret, profile, done) => {
-  done(null, profile)
+  return done(null, profile)
 }))
 
 passport.serializeUser((user, done) => {
@@ -44,19 +44,18 @@ app.get('/auth/github', passport.authenticate('github'))
 
 app.get('/auth/github/callback', passport.authenticate('github', {
   successRedirect: '/#/home',
-  failureRedirect: '/auth/github'
+  failureRedirect: '/'
 }), (req, res) => {
   req.session.user = loggedInUser;
   res.send(req.session)
 }, (err) => {
   if (err) {
-    res.redirect('/auth/github')
+    res.redirect('/')
   } else {
     res.send(req.session)
   }
 })
 
-
-app.listen(9000, () => {
-  console.log("Listening on 9000!")
+app.listen(3000, () => {
+  console.log("Listening on 3000!")
 })
